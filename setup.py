@@ -39,7 +39,7 @@ setup(
     name='pragma',
     version=find_version("pragma", "__init__.py"),
     description='An API for citing Wayback Snapshots with OpenAnnotations',
-    long_description=read('README.rst'),
+    long_description=read('README.md'),
     classifiers=[
         ],
     author='mek',
