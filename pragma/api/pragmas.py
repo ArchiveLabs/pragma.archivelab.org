@@ -22,22 +22,33 @@ from sqlalchemy.orm import relationship
 from api import db, engine, core
 
 
-class Pragma(core.Base):
+class OpenAnnotation(core.Base):
 
-    __tablename__ = "pragmas"
+    __tablename__ = "annotations"
 
     id = Column(BigInteger, primary_key=True)
+    annotation = Column(JSON, nullable=False)
+
+
+class WaybackSnapshot(core.Base):
+
+    __tablename__ = "wayback_snapshots"
+
+    id = Column(BigInteger, primary_key=True)
+    annotation_id = Column(BigInteger, ForeignKey('annotations.id'), nullable=True)
     wayback_id = Column(Unicode, nullable=False)
     domain = Column(Unicode, nullable=False)
     path = Column(Unicode, nullable=False)
     protocol = Column(Unicode, nullable=False)
-    annotation = Column(JSON)
+
+    annotation = relationship('OpenAnnotation', backref='wayback_snapshots')
 
 
 def save(url):
     r = requests.get('http://web.archive.org/save/%s' % url)
     if 'x-archive-wayback-liveweb-error' in r.headers:
-        raise core.HTTPException(r.headers['x-archive-wayback-liveweb-error'], r.status_code)
+        raise core.HTTPException(r.headers['x-archive-wayback-liveweb-error'],
+                                 r.status_code)
     protocol = 'https' if 'https://' in r.headers['content-location'] else 'http'
     uri = r.headers['content-location'].split("://")[1]
     path = uri[uri.index('/'):] if uri.index('/') is not None else '/';

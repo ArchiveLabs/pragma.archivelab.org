@@ -21,7 +21,5 @@ app = router(Flask(__name__), urls)
 cors = CORS(app) if cors else None
 
 
-
-
 if __name__ == "__main__":
     app.run(**options)
