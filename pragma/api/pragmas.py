@@ -10,16 +10,12 @@
     :license: see LICENSE for more details.
 """
 
-from random import randint
-from datetime import datetime
 import requests
 from sqlalchemy.dialects.postgresql import JSON
-from sqlalchemy import Column, Unicode, BigInteger, Integer, \
-    Unicode, DateTime, ForeignKey, Table, exists, func
-from sqlalchemy.exc import IntegrityError, InvalidRequestError
-from sqlalchemy.orm.exc import ObjectDeletedError
+from sqlalchemy import Column, Unicode, BigInteger, \
+    ForeignKey
 from sqlalchemy.orm import relationship
-from api import db, engine, core
+from api import core
 
 
 class OpenAnnotation(core.Base):
@@ -49,13 +45,10 @@ def save(url):
     if 'x-archive-wayback-liveweb-error' in r.headers:
         raise core.HTTPException(r.headers['x-archive-wayback-liveweb-error'],
                                  r.status_code)
-    protocol = 'https' if 'https://' in r.headers['content-location'] else 'http'
     uri = r.headers['content-location'].split("://")[1]
-    path = uri[uri.index('/'):] if uri.index('/') is not None else '/';
     return {
-        'date': r.headers['date'],
-        'protocol': protocol,
+        'protocol': 'https' if 'https://' in r.headers['content-location'] else 'http',
         'domain': uri.split('/')[0],
-        'path': path,
-        'id': r.headers['content-location']
+        'path': uri[uri.index('/'):] if uri.index('/') is not None else '/',
+        'wayback_id': r.headers['content-location']
     }

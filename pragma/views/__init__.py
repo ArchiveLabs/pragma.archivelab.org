@@ -12,9 +12,7 @@
 import calendar
 from datetime import datetime
 from flask import jsonify, request
-from flask import Flask, jsonify
 from flask.json import JSONEncoder
-from api.core import ApiException, HTTPException
 from api import db
 
 
@@ -73,5 +71,5 @@ def search(model, limit=50, lazy=True):
     limit = min(request.args.get('limit', limit), limit)
     if all([query, field, limit]):
         return model.search(query, field=field, limit=limit, lazy=lazy)
-    raise ValueError('Query and field must be provided. Valid fields are: %s' \
-                         %  model.__table__.columns.keys())
+    raise ValueError('Query and field must be provided. Valid fields are: %s'
+                     % model.__table__.columns.keys())
