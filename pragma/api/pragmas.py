@@ -27,6 +27,7 @@ class OpenAnnotation(core.Base):
     __tablename__ = "annotations"
 
     id = Column(BigInteger, primary_key=True)
+    canvas_id = Column(Unicode, nullable=True)
     annotation = Column(JSON, nullable=False)
 
 

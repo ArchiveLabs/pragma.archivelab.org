@@ -9,17 +9,26 @@
     :license: see LICENSE for more details.
 """
 
-from flask import render_template, request
+from flask import render_template, request, jsonify
 from flask.views import MethodView
+import json
+
 from views import rest, paginate
 from datetime import datetime
-from api.pragmas import save, WaybackSnapshot, OpenAnnotation
+from api.pragmas import db, save, WaybackSnapshot, OpenAnnotation
 from configs import WAYBACK_SERVER
 
 
 class OpenAnnotations(MethodView):
     @rest
     def get(self, oaid=None):
+        canvas_id = request.args.get('canvas_id', None)
+        if canvas_id:
+            return {
+                "annotations": [annotation.dict() for annotation in 
+                                db.query(OpenAnnotation)\
+                                .filter(OpenAnnotation.canvas_id == canvas_id).all()]
+            }
         if oaid:
             return OpenAnnotation.get(oaid).dict()
         return {"annotations": [oa.dict() for oa in OpenAnnotation.query.all()]}
@@ -27,8 +36,12 @@ class OpenAnnotations(MethodView):
     @rest
     def post(self):
         annotation = request.json
-        oa = OpenAnnotation(annotation=annotation)
-        return annotation
+        canvas_id = annotation['on']['full'] if 'on' in annotation else None
+        oa = OpenAnnotation(annotation=annotation, canvas_id=canvas_id)
+        oa.create()
+        oa.annotation['@id'] = oa.id
+        oa.save()
+        return oa.dict()
 
 
 class WaybackAnnotations(MethodView):
