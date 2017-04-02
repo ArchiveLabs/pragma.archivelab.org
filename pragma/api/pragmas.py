@@ -46,17 +46,24 @@ class WaybackSnapshot(core.Base):
 
 
 def save(url):
-    r = requests.get('http://web.archive.org/save/%s' % url)
+    url = url if '://' in url else 'http://' + url
+    r = requests.get('http://web.archive.org/save/%s' % url)    
+    if 'X-Archive-Wayback-Runtime-Error' in r.headers:
+        return {
+            'error': r.headers['X-Archive-Wayback-Runtime-Error']
+        }
+    print(r.headers)
+    content_location = r.headers.get('content-location', url)
     if 'x-archive-wayback-liveweb-error' in r.headers:
         raise core.HTTPException(r.headers['x-archive-wayback-liveweb-error'],
                                  r.status_code)
-    protocol = 'https' if 'https://' in r.headers['content-location'] else 'http'
-    uri = r.headers['content-location'].split("://")[1]
+    protocol = 'https' if 'https://' in content_location else 'http'
+    uri = content_location.split("://")[1] 
     path = uri[uri.index('/'):] if uri.index('/') is not None else '/';
     return {
         'date': r.headers['date'],
         'protocol': protocol,
         'domain': uri.split('/')[0],
         'path': path,
-        'id': r.headers['content-location']
+        'id': content_location
     }

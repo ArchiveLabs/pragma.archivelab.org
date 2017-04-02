@@ -54,6 +54,9 @@ class WaybackAnnotations(MethodView):
         url = request.json.get('url', '')
         annotation = request.json.get('annotation', '')
         wayback = save(url)
+        if 'error' in wayback:
+            return wayback
+
         wayback_url = '%s%s' % (WAYBACK_SERVER, wayback['id'])
 
         if annotation:
