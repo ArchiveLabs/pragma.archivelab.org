@@ -10,14 +10,14 @@
 """
 
 from flask import Flask
-from flask.ext.routing import router
-from flask.ext.cors import CORS
+from flask_cors import CORS
+from flask_routing import router
 from views import endpoints
 from configs import options, cors
 
 
 urls = ('', endpoints)
-app = router(Flask(__name__), urls)
+app = router(Flask(__name__, static_folder=None, static_url_path='https://web.archive.org/static'), urls)
 cors = CORS(app) if cors else None
 
 

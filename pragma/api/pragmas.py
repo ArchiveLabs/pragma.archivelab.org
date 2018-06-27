@@ -16,6 +16,8 @@ import requests
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy import Column, Unicode, BigInteger, Integer, \
     Unicode, DateTime, ForeignKey, Table, exists, func
+
+from sqlalchemy.types import Boolean
 from sqlalchemy.exc import IntegrityError, InvalidRequestError
 from sqlalchemy.orm.exc import ObjectDeletedError
 from sqlalchemy.orm import relationship
@@ -28,6 +30,7 @@ class OpenAnnotation(core.Base):
 
     id = Column(BigInteger, primary_key=True)
     canvas_id = Column(Unicode, nullable=True)
+    is_crosslink = Column(Boolean, default=False)
     annotation = Column(JSON, nullable=False)
 
 
