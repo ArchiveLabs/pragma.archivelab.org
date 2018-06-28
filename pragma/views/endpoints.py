@@ -9,7 +9,7 @@
     :license: see LICENSE for more details.
 """
 
-from flask import render_template, request, jsonify
+from flask import render_template, request, jsonify, redirect
 from flask.views import MethodView
 import requests
 import json
@@ -102,24 +102,34 @@ class WaybackResource(MethodView):
         return requests.get('https://web.archive.org/%s' % resource).content
 
 class WaybackAnnotations(MethodView):
-    @rest
+
     def get(self, pid=None):
         if pid:
-            return WaybackSnapshot.get(pid).dict()
-        return {"pragmas": [p.dict() for p in WaybackSnapshot.query.all()]}
+            return jsonify(WaybackSnapshot.get(pid).dict())
+        return render_template('spn.html')
 
-    @rest
     def post(self):
-        url = request.json.get('url', '')
-        annotation = request.json.get('annotation', '')
+        annotation = ''
+        if request.json:
+            url = request.json.get('url', '')
+            annotation = request.json.get('annotation', '')
+        elif request.form:
+            url = request.form.get('url', '')
+            if request.form.get('annotation'):
+                annotation = {"id": "%s" % request.form.get('annotation', '')}
+            redir = request.form.get('redirect', False)
+
+        if not url:
+            return jsonify({'error': 'url required'})
+
         wayback = save(url)
         if 'error' in wayback:
-            return wayback
+            return jsonify(wayback)
 
         wayback_url = '%s%s' % (WAYBACK_SERVER, wayback['id'])
 
         if annotation:
-            annotation['hasTarget']= {
+            annotation['hasTarget'] = {
                 'hasSource': {
                     '@id': wayback_url,
                     'originalUrl': '%s://%s%s' % (
@@ -139,7 +149,12 @@ class WaybackAnnotations(MethodView):
         if annotation:
             p.annotation_id = oa.id
         p.create()
-        return p.dict()
+
+        response = p.dict()
+        if redir:
+            return redirect('/playback/%s' % response['id'])
+
+        return jsonify(response)
 
 
 class WaybackAnnotation(MethodView):
@@ -161,6 +176,7 @@ urls = (
     '/annotations', OpenAnnotations,
     '/playback/<pid>', WaybackPlayback,
     '/wayback-annotations/<pid>', WaybackAnnotation,
+    '/create-wayback-citation', WaybackAnnotations,
     '/<path:resource>', WaybackResource,
     '/', WaybackAnnotations
 )
