@@ -13,6 +13,7 @@ from flask import render_template, request, jsonify, redirect
 from flask.views import MethodView
 import requests
 import json
+import time
 from sqlalchemy.orm.attributes import flag_modified
 from views import rest, paginate
 from datetime import datetime
@@ -152,6 +153,7 @@ class WaybackAnnotations(MethodView):
 
         response = p.dict()
         if redir:
+            time.sleep(10)
             return redirect('/playback/%s' % response['id'])
 
         return jsonify(response)
