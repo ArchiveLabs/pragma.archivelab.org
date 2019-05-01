@@ -9,7 +9,7 @@
     :license: see LICENSE for more details.
 """
 
-from flask import render_template, request, jsonify, redirect
+from flask import render_template, request, jsonify, redirect, Response
 from flask.views import MethodView
 import requests
 import json
@@ -90,17 +90,21 @@ class WaybackPlayback(MethodView):
 
     def get(self, pid):
         wbs = WaybackSnapshot.get(pid)
-        r = requests.get('https://web.archive.org%s' % wbs.wayback_id)
-        snapshot = r.content
-        if wbs.annotation_id:
-            css_id = wbs.annotation.dict().get('annotation').get('id')
-            snapshot = snapshot.decode('utf-8').strip().replace('</body>', self.cite(css_id) + "</body>")
-        return snapshot
+        url = 'https://web-beta.archive.org%s#wbaid-%s' % (wbs.wayback_id, pid)
+        return redirect(url)
+
+        #r = requests.get('https://web.archive.org%s' % wbs.wayback_id)
+        #snapshot = r.content
+        #if wbs.annotation_id:
+        #    css_id = wbs.annotation.dict().get('annotation').get('id')
+        #    snapshot = snapshot.decode('utf-8').strip().replace('</body>', self.cite(css_id) + "</body>")
+        #return snapshot
 
 class WaybackResource(MethodView):
 
     def get(self, resource=None):
-        return requests.get('https://web.archive.org/%s' % resource).content
+        response = requests.get('https://web.archive.org/%s' % resource)
+        return Response(response.content, mimetype=response.headers['content-type'])
 
 class WaybackAnnotations(MethodView):
 
@@ -111,6 +115,7 @@ class WaybackAnnotations(MethodView):
 
     def post(self):
         annotation = ''
+        redir = False
         if request.json:
             url = request.json.get('url', '')
             annotation = request.json.get('annotation', '')
